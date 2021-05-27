@@ -19,5 +19,5 @@ jobs:
         env:
           RSHINY_TOKEN: ${{ secrets.RSHINY_TOKEN}}
           RSHINY_SECRET: ${{ secrets.RSHINY_SECRET}}
-        run: source("R\deploy.R")
+        run: source("R/deploy.R")
         shell: Rscript {0} 
