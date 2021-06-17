@@ -1,12 +1,3 @@
-#
-# This is a Shiny web application. You can run the application by clicking
-# the 'Run App' button above.
-#
-# Find out more about building applications with Shiny here:
-#
-#    http://shiny.rstudio.com/
-#
-
 library(shiny)
 
 # Define UI for application that draws a histogram
@@ -18,6 +9,7 @@ ui <- fluidPage(
     # Sidebar with a slider input for number of bins 
     sidebarLayout(
         sidebarPanel(
+            "Parameters",
             sliderInput("a",
                         "Rate of water transfer:",
                         min = 0,
@@ -26,25 +18,28 @@ ui <- fluidPage(
             sliderInput("k",
                         "Initial water:",
                         min = 0,
-                        max = 10,
-                        value = 5),
+                        max = 1,
+                        value = 0.1),
             sliderInput("gamma",
                         "Added water:",
                         min = 0,
                         max = 1,
                         value = 0.1),
+            
         ),
 
         # Show a plot of the generated distribution
         mainPanel(
+            # Simulate button
+            actionButton("do", "Grow the snowflake!"),
            plotOutput("distPlot")
         )
     )
 )
 
-# Define server logic required to draw a histogram
+# Define server logic
 server <- function(input, output) {
-
+    observeEvent(input$do, {print("test")})
     output$distPlot <- renderPlot({
         # generate bins based on input$bins from ui.R
         x    <- faithful[, 2]
