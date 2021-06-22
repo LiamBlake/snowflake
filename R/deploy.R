@@ -1,4 +1,4 @@
-install.packages(c("rshiny", "rsconnect"))
+install.packages(c("shiny", "rsconnect"))
 
 rsconnect::setAccountInfo(name="liamblake", 
                           token = Sys.getenv("RSHINY_TOKEN"),
