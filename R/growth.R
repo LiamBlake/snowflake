@@ -1,4 +1,4 @@
-initialise <- function(k, nrow = 21, ncol = 21) {
+initialise <- function(k, nrow = 101, ncol = 101) {
   state <- matrix(k, nrow = nrow, ncol = ncol)
 
   # Frozen core
@@ -16,12 +16,18 @@ step <- function(a, gamma, state) {
   # Non-receptive cells
   for (r in 1:nrow(state)) {
     for (c in 1:ncol(state)) {
+      # Frozen or receptive cells no longer need update
       if (is_frozen_receptive[r, c]) {
         next
       }
     }
 
     # Sum contributions from neighboring cells
+    if (r %% 2 == 0) {
+      
+    } else {
+      
+    }
     # for (p in c(c(), ))
   }
 }
