@@ -2,10 +2,7 @@ library(shiny)
 
 source("growth.R")
 
-# Indicates whether the snowflake is currently being grown
-default_k <- 0.1
-growing <- FALSE
-state <- initialise(default_k)
+cstate <- initialise(0.1)
 
 # Define UI for application
 ui <- fluidPage(
@@ -27,7 +24,7 @@ ui <- fluidPage(
         "Initial water:",
         min = 0,
         max = 1,
-        value = default_k
+        value = 0.1
       ),
       sliderInput("gamma",
         "Added water:",
@@ -63,9 +60,8 @@ hexagon <- function(x, y, unitcell = 1, col = col) {
   )
 }
 
-# Define server logic
-server <- function(input, output) {
-  output$snowflake <- renderPlot(
+plot_cells <- function(state) {
+  return(renderPlot(
     {
       frozen_cells <- is_frozen(state)
 
@@ -95,27 +91,24 @@ server <- function(input, output) {
     },
     width = 500,
     height = 500
-  )
+  ))
+}
+
+# Define server logic
+server <- function(input, output) {
+  # Initial plot
+  output$snowflake <- plot_cells(cstate)
 
   observeEvent(input$do, {
+    # Reset snowflake initialisation
+    cstate <- initialise(input$k)
+    
     # Trigger the growth process
-    if (!growing) {
-      growing <- TRUE
-      state <- initialise(input$k)
+    while (!check_stop(cstate)) {
+      cstate <- step(input$a, input$gamma, cstate)
+      output$snowflake <- plot_cells(cstate)
     }
   })
-
-  growing <- FALSE
-
-  # Perform the growth
-  if (growing) {
-    state <- step(input$a, input$gamma, state)
-  }
-
-  # Check stopping condition
-  if (check_stop(state)) {
-    growing <- FALSE
-  }
 }
 
 # Run the application

@@ -21,35 +21,35 @@ is_frozen <- function(state) {
 
 is_receptive <- function(state) {
   frozen <- is_frozen(state)
-  is_receptive <- frozen
-  
+  receptive <- frozen
+
   for (r in 1:nrow(state)) {
     for (c in 1:ncol(state)) {
       # Frozen cells have already been marked as receptive
       if (frozen[r, c]) {
         next
       }
-      
+
       neighbours <- get_neighbours(r)
       for (p in neighbours) {
-        if (tryCatch(
-          {
-            frozen[r + p[0], c + p[1]]
-          },
-          error = function(cond) {
-            FALSE
-          }
-        )) {
-          is_receptive[r, c] <- TRUE
+        # Check whether the cell is frozen
+        # This call returns a 0-length vector if the cell is
+        # outside the boundaries of the array. R is weird with
+        # matrices.
+        cell_is_frozen <- tryCatch({frozen[r + p[0], c + p[1]]}, error=function(cond){FALSE})
+        if (length(cell_is_frozen) > 0 && cell_is_frozen) {
+          receptive[r, c] <- TRUE
           break
         }
       }
     }
   }
+  return(receptive)
 }
 
 
 step <- function(a, gamma, state) {
+  print("Iterating...")
   receptive <- is_receptive(state)
 
   # Receptive cells
@@ -68,18 +68,15 @@ step <- function(a, gamma, state) {
       sum <- 0
       for (p in neighbours) {
         # Ignore cells outside of the boundary
-        sum <- sum + tryCatch(
-          {
-            state[r + p[0], c + p[1]]
-          },
-          error = function(cond) {
-            0
-          }
-        )
+        # As above, R is weird.
+        add <- tryCatch({state[r + p[0], c + p[1]]}, error=function(cond){0})
+        sum <- sum + ifelse(length(add) > 0, add, 0)
       }
-      state[r, c] <- (1 - k) * state[r, c] + k / 6 * sum
+      state[r, c] <- (1 - a) * state[r, c] + a / 6 * sum
     }
   }
+  
+  return(state)
 }
 
 check_stop <- function(state) {
