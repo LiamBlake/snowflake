@@ -9,9 +9,9 @@ initialise <- function(k, nrow = 5, ncol = 5) {
 
 get_neighbours <- function(r) {
   if (r %% 2 == 0) {
-    return(c(c(-1, -1), c(-1, 0), c(0, -1), c(0, 1), c(1, -1), c(1, 0)))
+    return(list(c(0, -1), c(-1, -1), c(-1, 0), c(-1, 1), c(0, 1), c(1, 0)))
   } else {
-    return(c(c(-1, 0), c(-1, 1), c(0, -1), c(0, 1), c(1, 0), c(1, 1)))
+    return(list(c(0, -1), c(-1, 0), c(1, 1), c(1, 1), c(1, 0), c(1, -1)))
   }
 }
 
@@ -76,23 +76,23 @@ step <- function(a, gamma, state) {
       neighbours <- get_neighbours(r)
       sum <- 0
       for (p in neighbours) {
-        # Ignore cells outside of the boundary
-        # As above, R is weird.
-        add <- tryCatch(
-          {
-            state[r + p[0], c + p[1]]
-          },
-          error = function(cond) {
-            0
-          }
-        )
-        sum <- sum + ifelse(length(add) > 0, add, 0)
+        rp <- r + p[1]
+        cp <- c + p[2]
+        
+        print(rp)
+        print(cp)
+        
+        if (rp > 0 && cp > 0 && rp <= nrow(state) && cp <= ncol(state) && !receptive[rp,cp]) {
+          sum <- sum + state[rp, cp]
+        }
+
+
       }
       new_state[r, c] <- (1 - a) * state[r, c] + a / 6 * sum
     }
   }
 
-  return(state)
+  return(new_state)
 }
 
 check_stop <- function(state) {

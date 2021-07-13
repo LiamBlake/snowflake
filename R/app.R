@@ -18,8 +18,8 @@ ui <- fluidPage(
         "a",
         "Rate of water transfer:",
         min = 0,
-        max = 10,
-        value = 1
+        max = 1,
+        value = 0.1
       ),
       sliderInput(
         "k",
@@ -80,6 +80,7 @@ server <- function(input, output) {
         # Iterate, plot
         cstate <- step(input$a, input$gamma, cstate)
         output$snowflake <- plot_cells(cstate)
+        print(cstate)
         rv$loop <- rv$loop + 1
       }
     }
