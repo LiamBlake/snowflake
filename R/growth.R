@@ -1,8 +1,20 @@
-initialise <- function(k, nrow = 5, ncol = 5) {
+initialise <- function(k, nrow = 11, ncol = 11) {
   state <- matrix(k, nrow = nrow, ncol = ncol)
 
   # Frozen core
   state[ceiling(nrow / 2), ceiling(ncol / 2)] <- 1
+
+  # Outer padding of zeros
+  for (r in 1:nrow) {
+    state[r, 1] <- 0
+    state[r, ncol] <- 0
+  }
+  for (c in 1:ncol) {
+    state[1, c] <- 0
+    state[nrow, c] <- 0
+  }
+
+  print("initialising")
 
   return(state)
 }
@@ -33,18 +45,10 @@ is_receptive <- function(state) {
       neighbours <- get_neighbours(r)
       for (p in neighbours) {
         # Check whether the cell is frozen
-        # This call returns a 0-length vector if the cell is
-        # outside the boundaries of the array. R is weird with
-        # matrices.
-        cell_is_frozen <- tryCatch(
-          {
-            frozen[r + p[0], c + p[1]]
-          },
-          error = function(cond) {
-            FALSE
-          }
-        )
-        if (length(cell_is_frozen) > 0 && cell_is_frozen) {
+        rp <- r + p[1]
+        cp <- c + p[2]
+
+        if (rp > 0 && cp > 0 && rp <= nrow(state) && cp <= ncol(state) && frozen[rp, cp]) {
           receptive[r, c] <- TRUE
           break
         }
@@ -65,8 +69,8 @@ step <- function(a, gamma, state) {
   new_state[receptive] <- state[receptive] + gamma
 
   # Non-receptive cells
-  for (r in 1:nrow(state)) {
-    for (c in 1:ncol(state)) {
+  for (r in 2:(nrow(state)-1)) {
+    for (c in 2:(ncol(state)-1)) {
       # Frozen or receptive cells no longer need update
       if (receptive[r, c]) {
         next
@@ -78,20 +82,14 @@ step <- function(a, gamma, state) {
       for (p in neighbours) {
         rp <- r + p[1]
         cp <- c + p[2]
-        
-        print(rp)
-        print(cp)
-        
-        if (rp > 0 && cp > 0 && rp <= nrow(state) && cp <= ncol(state) && !receptive[rp,cp]) {
+
+        if (rp > 0 && cp > 0 && rp <= nrow(state) && cp <= ncol(state) && !receptive[rp, cp]) {
           sum <- sum + state[rp, cp]
         }
-
-
       }
       new_state[r, c] <- (1 - a) * state[r, c] + a / 6 * sum
     }
   }
-
   return(new_state)
 }
 
@@ -129,7 +127,7 @@ hexagon <- function(x, y, unitcell = 1, col) {
   )
 }
 
-plot_cells <- function(state, show_values=FALSE) {
+plot_cells <- function(state, show_values = FALSE) {
   return(renderPlot(
     {
       frozen_cells <- is_frozen(state)

@@ -2,6 +2,7 @@ library(shiny)
 
 source("growth.R")
 
+# This is the state of the system, which must persist across server loops
 cstate <- initialise(0.9)
 
 # Define UI for application
@@ -19,7 +20,7 @@ ui <- fluidPage(
         "Rate of water transfer:",
         min = 0,
         max = 1,
-        value = 0.1
+        value = 1
       ),
       sliderInput(
         "k",
@@ -53,7 +54,7 @@ ui <- fluidPage(
 
 # Define server logic
 server <- function(input, output) {
-  # Initial plot
+  # Initialisation
   output$snowflake <- plot_cells(cstate)
 
   # Approach to get iteration in app, from
@@ -64,7 +65,7 @@ server <- function(input, output) {
     # Reset and start growth loop
     # Don't reset unless the loop is not currently in progress
     if (rv$loop < 1) {
-      cstate <- initialise(0.9)
+      cstate <<- initialise(0.9)
       rv$loop <- 1
     }
   })
@@ -78,10 +79,10 @@ server <- function(input, output) {
       } else {
 
         # Iterate, plot
-        cstate <- step(input$a, input$gamma, cstate)
+        cstate <<- step(input$a, input$gamma, cstate)
         output$snowflake <- plot_cells(cstate)
-        print(cstate)
         rv$loop <- rv$loop + 1
+        print(cstate)
       }
     }
   })
