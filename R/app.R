@@ -1,6 +1,7 @@
 library(shiny)
 
 source("growth.R")
+source("visualise.R")
 
 cstate <- initialise(0.9)
 
@@ -64,7 +65,7 @@ server <- function(input, output, session) {
     # Reset and start growth loop
     # Don't reset unless the loop is not currently in progress
     if (rv$loop < 1) {
-      rv$cstate <- initialise(0.9)
+      rv$cstate <- initialise(input$k)
       rv$loop <- 1
     }
   })
