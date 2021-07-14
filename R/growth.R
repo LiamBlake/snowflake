@@ -1,4 +1,4 @@
-initialise <- function(k, nrow = 51, ncol = 51) {
+initialise <- function(k, nrow = 11, ncol = 11) {
   state <- matrix(k, nrow = nrow, ncol = ncol)
 
   # Frozen core
@@ -65,7 +65,7 @@ step <- function(a, gamma, state) {
 
   # Receptive cells
   new_state[receptive] <- state[receptive] + gamma
-
+  
   # Non-receptive cells
   for (r in 2:(nrow(state)-1)) {
     for (c in 2:(ncol(state)-1)) {

@@ -2,7 +2,6 @@ library(shiny)
 
 source("growth.R")
 
-# This is the state of the system, which must persist across server loops
 cstate <- initialise(0.9)
 
 # Define UI for application
@@ -53,39 +52,49 @@ ui <- fluidPage(
 )
 
 # Define server logic
-server <- function(input, output) {
-  # Initialisation
-  output$snowflake <- plot_cells(cstate)
-
+server <- function(input, output, session) {
   # Approach to get iteration in app, from
-  # https://stackoverflow.com/a/61867175
-  rv <- reactiveValues(cstate = initialise(input$k), loop = 0)
+  # https://gist.github.com/trestletech/8608815
+  rv <- reactiveValues(cstate = cstate, loop = 0)
+
+  # Plot of state
+  output$snowflake <- plot_cells(rv$cstate)
 
   observeEvent(input$do, {
     # Reset and start growth loop
     # Don't reset unless the loop is not currently in progress
     if (rv$loop < 1) {
-      cstate <<- initialise(0.9)
+      rv$cstate <- initialise(0.9)
       rv$loop <- 1
     }
   })
 
   # The actual loop
-  observeEvent(rv$loop, {
-    if (rv$loop > 0) {
-      # Check for stopping condition
-      if (check_stop(cstate)) {
-        rv$loop <- 0
-      } else {
+  observe({
+    isolate({
+      if (rv$loop > 0) {
+        # Check for stopping condition
+        if (check_stop(rv$cstate)) {
+          rv$loop <- 0
+        } else {
 
-        # Iterate, plot
-        cstate <<- step(input$a, input$gamma, cstate)
-        output$snowflake <- plot_cells(cstate)
-        rv$loop <- rv$loop + 1
-        print(cstate)
+          # Iterate, plot
+          rv$cstate <- step(input$a, input$gamma, rv$cstate)
+          output$snowflake <- plot_cells(rv$cstate)
+          rv$loop <- rv$loop + 1
+        }
       }
+    })
+    
+    # Check stopping condition - if loop continues, schedule
+    # for later so the plot can be drawn again.
+    if (check_stop(isolate(rv$cstate))) {
+      rv$loop <- -1
+    } else {
+      invalidateLater(0, session)
     }
   })
+
 }
 
 # Run the application
