@@ -1,8 +1,8 @@
-initialise <- function(k, nrow = 11, ncol = 11) {
+initialise <- function(k, nrow = 51, ncol = 51) {
   state <- matrix(k, nrow = nrow, ncol = ncol)
 
   # Frozen core
-  state[ceiling(nrow / 2), ceiling(ncol / 2)] <- 1
+  state[ceiling((nrow + 1) / 2), ceiling((ncol + 1) / 2)] <- 1
 
   # Outer padding of zeros
   for (r in 1:nrow) {
@@ -14,16 +14,14 @@ initialise <- function(k, nrow = 11, ncol = 11) {
     state[nrow, c] <- 0
   }
 
-  print("initialising")
-
   return(state)
 }
 
 get_neighbours <- function(r) {
   if (r %% 2 == 0) {
-    return(list(c(0, -1), c(-1, -1), c(-1, 0), c(-1, 1), c(0, 1), c(1, 0)))
+    return(list(c(0,-1), c(0,1), c(-1,-1), c(-1,0), c(1,-1), c(1,0)))
   } else {
-    return(list(c(0, -1), c(-1, 0), c(1, 1), c(1, 1), c(1, 0), c(1, -1)))
+    return(list(c(0,-1), c(0,1), c(-1,0), c(-1,1), c(1,0), c(1,1)))
   }
 }
 
@@ -99,9 +97,9 @@ check_stop <- function(state) {
   nrows <- nrow(state)
   ncols <- ncol(state)
 
-  for (r in 1:nrows) {
-    for (c in 1:ncols) {
-      if ((r == 1 || c == 1 || r == nrows || c == ncols) && frozen[r, c]) {
+  for (r in 2:(nrows-1)) {
+    for (c in 2:(ncols-1)) {
+      if ((r == 2 || c == 2 || r == nrows - 1 || c == ncols - 1) && frozen[r, c]) {
         return(TRUE)
       }
     }

@@ -59,7 +59,7 @@ server <- function(input, output) {
 
   # Approach to get iteration in app, from
   # https://stackoverflow.com/a/61867175
-  rv <- reactiveValues(loop = 0)
+  rv <- reactiveValues(cstate = initialise(input$k), loop = 0)
 
   observeEvent(input$do, {
     # Reset and start growth loop
