@@ -85,7 +85,7 @@ server <- function(input, output, session) {
         }
       }
     })
-    
+
     # Check stopping condition - if loop continues, schedule
     # for later so the plot can be drawn again.
     if (check_stop(isolate(rv$cstate))) {
@@ -94,7 +94,6 @@ server <- function(input, output, session) {
       invalidateLater(0, session)
     }
   })
-
 }
 
 # Run the application
