@@ -1,18 +1,8 @@
-initialise <- function(k, nrow = 11, ncol = 11) {
+initialise <- function(k, nrow = 51, ncol = 51) {
   state <- matrix(k, nrow = nrow, ncol = ncol)
 
   # Frozen core
   state[ceiling((nrow + 1) / 2), ceiling((ncol + 1) / 2)] <- 1
-
-  # Outer padding of zeros
-  for (r in 1:nrow) {
-    state[r, 1] <- 0
-    state[r, ncol] <- 0
-  }
-  for (c in 1:ncol) {
-    state[1, c] <- 0
-    state[nrow, c] <- 0
-  }
 
   return(state)
 }
@@ -63,31 +53,23 @@ step <- function(a, gamma, state) {
 
   new_state <- state
 
-  # Receptive cells
+  # Update for receptive cells
   new_state[receptive] <- state[receptive] + gamma
 
-  # Non-receptive cells
-  for (r in 2:(nrow(state) - 1)) {
-    for (c in 2:(ncol(state) - 1)) {
-      # Frozen or receptive cells no longer need update
-      if (receptive[r, c]) {
-        next
-      }
+  nr <- nrow(state)
+  nc <- ncol(state)
 
-      # Sum contributions from neighboring cells
-      neighbours <- get_neighbours(r)
-      sum <- 0
-      for (p in neighbours) {
-        rp <- r + p[1]
-        cp <- c + p[2]
+  # These matrices shift the cells to align on their neighbours
+  n1 <- cbind(state[, 2:nc], matrix(0, nrow = nc, ncol = 1))
+  n2 <- cbind(matrix(0, nrow = nc, ncol = 1), state[, 1:(nc - 1)])
+  n3 <- rbind(state[2:nr, ], matrix(0, nrow = 1, ncol = nc))
+  n4 <- rbind(matrix(0, nrow = 1, ncol = nc), state[1:(nr - 1), ])
+  n5 <- cbind(matrix(0, nrow = nr, ncol = 1), rbind(matrix(0, nrow = 1, ncol = nc - 1), state[2:nr, 2:nr]))
+  n6 <- cbind(rbind(state[1:(nr - 1), 1:(nr - 1)], matrix(0, nrow = 1, ncol = nc - 1)), matrix(0, nrow = nr, ncol = 1))
+  
+  # This is the diffusion step for non-receptive cells
+  new_state <- new_state - a * state * !receptive + a / 6 * (n1 + n2 + n3 + n4 + n5 + n6)
 
-        if (rp > 0 && cp > 0 && rp <= nrow(state) && cp <= ncol(state) && !receptive[rp, cp]) {
-          sum <- sum + state[rp, cp]
-        }
-      }
-      new_state[r, c] <- (1 - a) * state[r, c] + a / 6 * sum
-    }
-  }
   return(new_state)
 }
 
@@ -97,8 +79,8 @@ check_stop <- function(state) {
   nrows <- nrow(state)
   ncols <- ncol(state)
 
-  for (r in 2:(nrows - 1)) {
-    for (c in 2:(ncols - 1)) {
+  for (r in 1:nrows) {
+    for (c in 1:ncols) {
       if ((r == 2 || c == 2 || r == nrows - 1 || c == ncols - 1) && frozen[r, c]) {
         return(TRUE)
       }
