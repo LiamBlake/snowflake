@@ -1,4 +1,4 @@
-initialise <- function(k, nrow = 51, ncol = 51) {
+initialise <- function(k, nrow = 101, ncol = 101) {
   state <- matrix(k, nrow = nrow, ncol = ncol)
 
   # Frozen core
@@ -7,55 +7,7 @@ initialise <- function(k, nrow = 51, ncol = 51) {
   return(state)
 }
 
-get_neighbours <- function(r) {
-  if (r %% 2 == 0) {
-    return(list(c(0, -1), c(0, 1), c(-1, -1), c(-1, 0), c(1, -1), c(1, 0)))
-  } else {
-    return(list(c(0, -1), c(0, 1), c(-1, 0), c(-1, 1), c(1, 0), c(1, 1)))
-  }
-}
-
-is_frozen <- function(state) {
-  state >= 1
-}
-
-is_receptive <- function(state) {
-  frozen <- is_frozen(state)
-  receptive <- frozen
-
-  for (r in 1:nrow(state)) {
-    for (c in 1:ncol(state)) {
-      # Frozen cells have already been marked as receptive
-      if (frozen[r, c]) {
-        next
-      }
-
-      neighbours <- get_neighbours(r)
-      for (p in neighbours) {
-        # Check whether the cell is frozen
-        rp <- r + p[1]
-        cp <- c + p[2]
-
-        if (rp > 0 && cp > 0 && rp <= nrow(state) && cp <= ncol(state) && frozen[rp, cp]) {
-          receptive[r, c] <- TRUE
-          break
-        }
-      }
-    }
-  }
-  return(receptive)
-}
-
-
-step <- function(a, gamma, state) {
-  print("Iterating...")
-  receptive <- is_receptive(state)
-
-  new_state <- state
-
-  # Update for receptive cells
-  new_state[receptive] <- state[receptive] + gamma
-
+get_neighbours <- function(state) {
   nr <- nrow(state)
   nc <- ncol(state)
 
@@ -66,9 +18,36 @@ step <- function(a, gamma, state) {
   n4 <- rbind(matrix(0, nrow = 1, ncol = nc), state[1:(nr - 1), ])
   n5 <- cbind(matrix(0, nrow = nr, ncol = 1), rbind(matrix(0, nrow = 1, ncol = nc - 1), state[2:nr, 2:nr]))
   n6 <- cbind(rbind(state[1:(nr - 1), 1:(nr - 1)], matrix(0, nrow = 1, ncol = nc - 1)), matrix(0, nrow = nr, ncol = 1))
-  
+
+  return(list(n1, n2, n3, n4, n5, n6))
+}
+
+is_frozen <- function(state) {
+  state >= 1
+}
+
+is_receptive <- function(state) {
+  frozen <- is_frozen(state)
+
+  # List of neighbours
+  n <- get_neighbours(frozen)
+
+  # Get one matrix as the union of n
+  receptive <- Reduce("|", n)
+
+  return(receptive)
+}
+
+
+step <- function(a, gamma, state) {
+  receptive <- is_receptive(state)
+  new_state <- state
+
+  # Update for receptive cells
+  new_state[receptive] <- state[receptive] + gamma
+
   # This is the diffusion step for non-receptive cells
-  new_state <- new_state - a * state * !receptive + a / 6 * (n1 + n2 + n3 + n4 + n5 + n6)
+  new_state <- new_state - a * state * !receptive + a / 6 * Reduce("+", get_neighbours(state))
 
   return(new_state)
 }
@@ -76,16 +55,10 @@ step <- function(a, gamma, state) {
 check_stop <- function(state) {
   # Check cells on boundary of matrix
   frozen <- is_frozen(state)
-  nrows <- nrow(state)
-  ncols <- ncol(state)
+  nr <- nrow(state)
+  nc <- ncol(state)
 
-  for (r in 1:nrows) {
-    for (c in 1:ncols) {
-      if ((r == 2 || c == 2 || r == nrows - 1 || c == ncols - 1) && frozen[r, c]) {
-        return(TRUE)
-      }
-    }
-  }
+  boundary_map <- cbind(matrix(TRUE, nrow = nr, ncol = 1), rbind(matrix(TRUE, nrow = 1, ncol = nc - 2), matrix(FALSE, nrow = nr - 2, nc = nr - 2), matrix(TRUE, nrow = 1, ncol = nc - 2)), matrix(TRUE, nrow = nr, ncol = 1))
 
-  return(FALSE)
+  return(any(frozen[boundary_map]))
 }
