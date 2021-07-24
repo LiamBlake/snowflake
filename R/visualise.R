@@ -1,5 +1,5 @@
 # Helper function to create the polygon for each hexagon
-hexagon <- function(x, y, unitcell = 1, col) {
+hexagon <- function(x, y, col, unitcell = 1) {
   polygon(c(
     x, x, x + unitcell / 2, x + unitcell, x + unitcell,
     x + unitcell / 2
@@ -15,10 +15,11 @@ hexagon <- function(x, y, unitcell = 1, col) {
   )
 }
 
-plot_cells <- function(state, show_values = FALSE) {
+plot_cells <- function(state, show_receptive = FALSE) {
   return(renderPlot(
     {
       frozen_cells <- is_frozen(state)
+      receptive_cells <- is_receptive(state)
       
       x <- as.vector(frozen_cells)
       
@@ -31,15 +32,18 @@ plot_cells <- function(state, show_values = FALSE) {
            ylim = c(0, nrows), xlab = "", ylab = "", asp = 1
       )
       
-      color_codes <- rep("#FFFFFF", length(x))
-      for (i in 1:length(x)) {
-        if (x[i]) color_codes[i] <- "#3288BD"
-      }
+      # TODO: Optional colouring of receptive cells
+      colour_codes <- ifelse(x, "#3288BD", "#FFFFFF")
+      
+      if (show_receptive) {
+        receptive_not_frozen <- as.vector(receptive_cells & !frozen_cells)
+        colour_codes <- ifelse(receptive_not_frozen, "#297439", colour_codes)
+      }    
       
       offset <- 0.5 # offset for the hexagons when moving up a row
       for (row in 1:nrows) {
         for (column in 0:(ncols - 1)) {
-          hexagon(column + offset, row - 1, col = color_codes[row + nrows * column])
+          hexagon(column + offset, row - 1, col = colour_codes[row + nrows * column])
         }
         offset <- ifelse(offset, 0, 0.5)
       }

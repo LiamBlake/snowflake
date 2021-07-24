@@ -1,4 +1,4 @@
-initialise <- function(k, nrow = 101, ncol = 101) {
+initialise <- function(k, nrow = 11, ncol = 11) {
   state <- matrix(k, nrow = nrow, ncol = ncol)
 
   # Frozen core
@@ -11,14 +11,24 @@ get_neighbours <- function(state) {
   nr <- nrow(state)
   nc <- ncol(state)
 
+  odd <- t(matrix(c(rep(TRUE, nc), rep(FALSE, nc)), nrow=nr, ncol=nc))
+  even <- !odd
+
   # These matrices shift the cells to align on their neighbours
-  n1 <- cbind(state[, 2:nc], matrix(0, nrow = nc, ncol = 1))
-  n2 <- cbind(matrix(0, nrow = nc, ncol = 1), state[, 1:(nc - 1)])
+  n1 <- cbind(state[, 2:nc], matrix(0, nrow = nr, ncol = 1))
+  n2 <- cbind(matrix(0, nrow = nr, ncol = 1), state[, 1:(nc - 1)])
   n3 <- rbind(state[2:nr, ], matrix(0, nrow = 1, ncol = nc))
   n4 <- rbind(matrix(0, nrow = 1, ncol = nc), state[1:(nr - 1), ])
-  n5 <- cbind(matrix(0, nrow = nr, ncol = 1), rbind(matrix(0, nrow = 1, ncol = nc - 1), state[2:nr, 2:nr]))
-  n6 <- cbind(rbind(state[1:(nr - 1), 1:(nr - 1)], matrix(0, nrow = 1, ncol = nc - 1)), matrix(0, nrow = nr, ncol = 1))
-
+  
+  # Shifting different for even, odd rows
+  n5e <- cbind(matrix(0, nrow = nr, ncol = 1), rbind(state[2:nr, 1:(nc-1)],matrix(0, nrow = 1, ncol = nc - 1)))
+  n5o <- cbind(rbind(state[2:nr, 2:nc], matrix(0, nrow = 1, ncol = nc - 1)),matrix(0, nrow = nr, ncol = 1))
+  n5 <- ifelse(even, n5e, 0) + ifelse(odd, n5o, 0)
+  
+  n6e <- cbind(matrix(0, nrow = nr, ncol = 1),rbind(matrix(0, nrow = 1, ncol = nc - 1), state[1:(nr - 1), 1:(nc - 1)]))
+  n6o <- cbind(rbind(matrix(0, nrow = 1, ncol = nc - 1), state[1:(nr - 1), 2:nc]), matrix(0, nrow = nr, ncol = 1))
+  n6 <- ifelse(even, n6e, 0) + ifelse(odd, n6o, 0)
+  
   return(list(n1, n2, n3, n4, n5, n6))
 }
 
@@ -47,7 +57,8 @@ step <- function(a, gamma, state) {
   new_state[receptive] <- state[receptive] + gamma
 
   # This is the diffusion step for non-receptive cells
-  new_state <- new_state - a * state * !receptive + a / 6 * Reduce("+", get_neighbours(state))
+  non_receptive = state * !receptive
+  new_state <- new_state + a *( -non_receptive + 1 / 6 * Reduce("+", get_neighbours(non_receptive)))
 
   return(new_state)
 }

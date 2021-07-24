@@ -37,8 +37,8 @@ ui <- fluidPage(
         value = 0.01
       ),
       checkboxInput(
-        "show_values",
-        "Show water vapour levels",
+        "show_receptive",
+        "Highlight receptive cells.",
         value = FALSE
       )
     ),
@@ -69,6 +69,11 @@ server <- function(input, output, session) {
       rv$loop <- 1
     }
   })
+  
+  observeEvent(input$show_receptive, {
+    # Redraw plot
+    output$snowflake <- plot_cells(rv$cstate, show_receptive=input$show_receptive)
+  })
 
   # The actual loop
   observe({
@@ -78,10 +83,9 @@ server <- function(input, output, session) {
         if (check_stop(rv$cstate)) {
           rv$loop <- 0
         } else {
-
           # Iterate, plot
           rv$cstate <- step(input$a, input$gamma, rv$cstate)
-          output$snowflake <- plot_cells(rv$cstate)
+          output$snowflake <- plot_cells(rv$cstate, show_receptive=input$show_receptive)
           rv$loop <- rv$loop + 1
         }
       }
